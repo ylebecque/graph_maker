@@ -8,7 +8,8 @@ import re
 st.set_page_config(
     page_title="Graph Maker - subplots",
     layout="centered",
-    initial_sidebar_state="auto",
+    initial_sidebar_state="expanded",
+    menu_items={"About": "**Repo Github** : https://github.com/ylebecque/graph_maker"},
 )
 
 

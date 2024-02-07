@@ -7,7 +7,8 @@ import seaborn as sns
 st.set_page_config(
     page_title="Graph Maker - graphique",
     layout="centered",
-    initial_sidebar_state="auto",
+    initial_sidebar_state="expanded",
+    menu_items={"About": "**Repo Github** : https://github.com/ylebecque/graph_maker"},
 )
 
 # Définition des listes de sélection
@@ -77,7 +78,7 @@ def generate_seaborn(type="scatterplot", **kwargs):
 # Barre latérale de définition du graphique
 
 with st.sidebar:
-    st.image("graph-maker-logo.png")
+
     # Sélection de la DataFrame
 
     # Sélection du graphique
@@ -236,6 +237,12 @@ if "max_fig" not in st.session_state:
 else:
     max_fig = st.session_state.max_fig
 
+if "memoire" not in st.session_state:
+    memoire = dict()
+    st.session_state["memoire"] = memoire
+else:
+    memoire = st.session_state["memoire"]
+
 col1, col2 = st.columns([0.3, 0.7])
 with col1:
     num_fig = st.number_input(
@@ -253,3 +260,26 @@ with col2:
         if num_fig >= max_fig:
             max_fig = num_fig
             st.session_state["max_fig"] = max_fig
+            memoire.update(
+                {
+                    num_fig: (
+                        style,
+                        type,
+                        x,
+                        y,
+                        hue,
+                        titre,
+                        nom_x,
+                        nom_y,
+                        choixpal,
+                        fig_size_x,
+                        fig_size_y,
+                        sizex,
+                        rotationx,
+                        sizey,
+                        rotationy,
+                        sns_code,
+                    )
+                }
+            )
+            st.session_state["memoire"] = memoire
