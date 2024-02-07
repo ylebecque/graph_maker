@@ -5,7 +5,7 @@ import seaborn as sns
 
 # Configuration de la page
 st.set_page_config(
-    page_title="Graph Maker",
+    page_title="Graph Maker - graphique",
     layout="centered",
     initial_sidebar_state="auto",
 )
@@ -35,8 +35,6 @@ dico_types = {
 
 def generate_seaborn(type="scatterplot", **kwargs):
     # Nom de la fonction
-    data = kwargs.pop("data")
-    # code = f"sns.{type}(data = {data}"
     code = f"sns.{type}(data = df"
     # x, y
     if kwargs.get("x"):
@@ -88,10 +86,11 @@ with st.sidebar:
         file = st.file_uploader("Choose a file")
         if file is not None:
             df = pd.read_csv(file)
+            # st.session_state.df = df
         else:
             if "df" not in st.session_state:
                 df = pd.read_csv("df.csv")
-        data = st.text_input("Nom de la dataframe : ", value="df")
+                # st.session_state.df = df
 
     st.write("Sélection du graphique")
     style = st.selectbox("Style de graphique :", style_graphique)
@@ -106,8 +105,9 @@ with st.sidebar:
 
     hue = st.selectbox("hue : ", [None] + args)
 
+
 # Partie centrale
-# st.title("Seaborn Graph Maker")
+
 
 # Insertions de trois colonnes pour les configurations avancées
 #   gestion des étiquettes
@@ -173,8 +173,11 @@ with st.expander("Options graphiques", expanded=False):
 # Création du code
 
 # graphique
-sns_code = f"fig, ax = plt.subplots(figsize=({fig_size_x}, {fig_size_y}))\n"
-sns_code += generate_seaborn(type=type, data=data, x=x, y=y, hue=hue, palette=choixpal)
+if "sns_code" not in st.session_state:
+    st.session_state["sns_code"] = ""
+
+sns_code_in = f"fig, ax = plt.subplots(figsize=({fig_size_x}, {fig_size_y}))\n"
+sns_code = generate_seaborn(type=type, data=df, x=x, y=y, hue=hue, palette=choixpal)
 
 # Titre / Etiquettes
 
@@ -195,13 +198,14 @@ ax.set_xticks(tx, txlabels, rotation={rotationx}, size='{sizex}')"""
 tylabels = ax.get_yticklabels()
 ax.set_yticks(ty, tylabels, rotation={rotationy}, size='{sizey}')"""
 
-sns_code += "\nplt.show()"
+sns_code_out = "\nplt.show()"
 
 # Affichage du graphique
 
 # Vérification de la faisabilité du graphique
 try:
-    cmd = compile(sns_code, "file", "exec")
+    code = sns_code_in + sns_code + sns_code_out
+    cmd = compile(code, "file", "exec")
     exec(cmd)
     st.pyplot(fig)
 except Exception as e:
@@ -222,4 +226,30 @@ else:
     imports = ""
 
 st.markdown("**Code généré :**")
-st.code(imports + sns_code)
+st.code(imports + code)
+
+st.divider()
+
+# Mémorisation dU numéro de la dernière figure enregistrée
+if "max_fig" not in st.session_state:
+    max_fig = 0
+else:
+    max_fig = st.session_state.max_fig
+
+col1, col2 = st.columns([0.3, 0.7])
+with col1:
+    num_fig = st.number_input(
+        "Num. graphique : ",
+        value=min(8, max_fig + 1),
+        min_value=1,
+        max_value=min(8, max_fig + 1),
+    )
+    st.caption(f"{max_fig} figure(s) mémorisée(s)")
+with col2:
+    st.header("\n\n\n")
+    if st.button("Enr. fig"):
+        st.session_state[f"fig_{num_fig}"] = sns_code
+        # Vérification du numéro de la "dernière" figure enregistrée
+        if num_fig >= max_fig:
+            max_fig = num_fig
+            st.session_state["max_fig"] = max_fig
