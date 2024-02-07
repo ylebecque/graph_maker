@@ -28,14 +28,25 @@ def calculate_rows_cols(nb_figs: int) -> dict:
 
 def create_axes(row, col, fig):
     axes = []
-    idx = 1
-    for f in range(1, fig):
-        axes.append(f"ax{f} = plt.subplot({row},{col},{f})")
-        idx += 1
-    if idx == row * col:
-        axes.append(f"ax{f+1} = plt.subplot({row},{col},{f+1})")
+    delta = (row * col) - fig + 1
+    print(delta)
+    # si autant de figures que d'axes
+    if delta == 0:
+        for f in range(1, fig + 1):
+            axes.append(f"ax{f} = plt.subplot({row},{col},{f})")
+    # si la figure restante tient sur une ligne
+    elif delta <= col:
+        for f in range(1, fig):
+            axes.append(f"ax{f} = plt.subplot({row},{col},{f})")
+        index = (fig, row * col)
+        axes.append(f"ax{f} = plt.subplot({row},{col},{index})")
+    # sinon elle tient sur une colonne
     else:
-        index = (idx, row * col)
+        list_index = [i for i in range(1, (row * col) + 1) if i % col != 0]
+        print(list_index)
+        for f in range(1, fig):
+            axes.append(f"ax{f} = plt.subplot({row},{col},{list_index[f-1]})")
+        index = (col, row * col)
         axes.append(f"ax{f} = plt.subplot({row},{col},{index})")
     return axes
 
