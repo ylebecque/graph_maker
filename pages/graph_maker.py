@@ -38,25 +38,18 @@ def generate_seaborn(type="scatterplot", **kwargs):
     # Nom de la fonction
     code = f"sns.{type}(data = df"
     # x, y
-    if kwargs.get("x"):
-        x = kwargs["x"]
-    else:
-        x = None
-    if kwargs.get("y"):
-        y = kwargs["y"]
-    else:
-        y = None
+    x = kwargs.get("x")
+    y = kwargs.get("y")
 
     if x:
-        # code += f"x = df['{x}']"
         code += f", x = '{x}'"
     if y:
-        # code += f", y = df['{y}']"
         code += f", y = '{y}'"
 
     # Arguments hue / palette
     hue = None
     palette = None
+    style = None
     if kwargs.get("hue"):
         hue = kwargs.pop("hue")
         print(hue)
@@ -64,13 +57,16 @@ def generate_seaborn(type="scatterplot", **kwargs):
             hue = None
     if kwargs.get("palette"):
         palette = kwargs.pop("palette")
+    if kwargs.get("style"):
+        style = kwargs.pop("style")
 
     # hue/palette
 
     if hue:
-        # code += f", hue = df['{hue}'], palette = '{palette}'"
         code += f", hue = '{hue}', palette = '{palette}'"
     # Fermeture de la parenthèse
+    if style:
+        code += f", style = '{style}'"
     code += ")"
     return code
 
@@ -82,7 +78,7 @@ with st.sidebar:
     # Sélection de la DataFrame
 
     # Sélection du graphique
-    with st.expander("Options dataframe", expanded=False):
+    with st.popover("Options dataframe", help="Cliquez pour charger un fichier"):
         st.write("Selection du fichier :")
         file = st.file_uploader("Choose a file")
         if file is not None:
@@ -94,17 +90,25 @@ with st.sidebar:
                 # st.session_state.df = df
 
     st.write("Sélection du graphique")
-    style = st.selectbox("Style de graphique :", style_graphique)
-    type = st.selectbox("Type de graphique :", dico_types[style])
+    style_graph = st.selectbox("Style de graphique :", style_graphique)
+    type = st.selectbox("Type de graphique :", dico_types[style_graph])
 
     # Sélection des arguments
     st.write("Sélection des arguments :")
     args = list(df.columns)
     x = st.selectbox("x : ", args, 0)
 
-    y = st.selectbox("y : ", args + [None], 1)
+    if type not in ["ecdfplot", "countplot"]:
+        y = st.selectbox("y : ", args + [None], 1)
+    else:
+        y = None
 
     hue = st.selectbox("hue : ", [None] + args)
+
+    if type in ["lineplot", "scatterplot"]:
+        style = st.selectbox("style :", [None] + args)
+    else:
+        style = None
 
 
 # Partie centrale
@@ -115,13 +119,33 @@ with st.sidebar:
 #   gestion des couleurs
 #   gestion des axes
 
-with st.expander("Options graphiques", expanded=False):
+with st.popover("Options graphiques", help="Cliquez pour voir les réglages avancés"):
     col1, col2, col3 = st.columns(3)
     with col1:
         st.write("étiquettes")
         titre = st.text_input("Titre du graphique", None)
         nom_x = st.text_input("Etiquette de l'axe x :", x)
         nom_y = st.text_input("Etiquette de l'axe y :", y)
+
+        if style or hue:
+            legend_loc = st.selectbox(
+                "Emplacement de la légende : ",
+                [
+                    "best",
+                    "upper right",
+                    "upper left",
+                    "lower left",
+                    "lower right",
+                    "right",
+                    "center left",
+                    "center right",
+                    "lower center",
+                    "upper center",
+                    "center",
+                ],
+            )
+        else:
+            legend_loc = None
 
     with col2:
         st.write("couleurs")
@@ -178,7 +202,9 @@ if "sns_code" not in st.session_state:
     st.session_state["sns_code"] = ""
 
 sns_code_in = f"fig, ax = plt.subplots(figsize=({fig_size_x}, {fig_size_y}))\n"
-sns_code = generate_seaborn(type=type, data=df, x=x, y=y, hue=hue, palette=choixpal)
+sns_code = generate_seaborn(
+    type=type, data=df, x=x, y=y, hue=hue, palette=choixpal, style=style
+)
 
 # Titre / Etiquettes
 
@@ -198,6 +224,9 @@ ax.set_xticks(tx, txlabels, rotation={rotationx}, size='{sizex}')"""
     sns_code += f"""\nty=ax.get_yticks()
 tylabels = ax.get_yticklabels()
 ax.set_yticks(ty, tylabels, rotation={rotationy}, size='{sizey}')"""
+
+if legend_loc:
+    sns_code += f"\nax.legend(loc = '{legend_loc}')"
 
 sns_code_out = "\nplt.show()"
 

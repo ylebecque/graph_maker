@@ -73,7 +73,7 @@ else:
 
 with st.sidebar:
     nb_figs = st.number_input(
-        "Nb figures : ", value=2, min_value=2, max_value=max(max_fig, 2)
+        "Nb figures : ", value=max_fig, min_value=2, max_value=max(max_fig, 2)
     )
     dico_rc = calculate_rows_cols(nb_figs)
     nb_rows = st.number_input("Nb lignes : ", value=1, min_value=1, max_value=nb_figs)
